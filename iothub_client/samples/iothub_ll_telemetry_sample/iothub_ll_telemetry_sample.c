@@ -54,7 +54,7 @@ and removing calls to _DoWork will yield the same results. */
 
 /* Paste in the your iothub connection string  */
 static const char* connectionString = "[device connection string]";
-#define MESSAGE_COUNT        5
+#define MESSAGE_COUNT        100000
 static bool g_continueRunning = true;
 static size_t g_message_count_send_confirmations = 0;
 
@@ -81,7 +81,7 @@ static void connection_status_callback(IOTHUB_CLIENT_CONNECTION_STATUS result, I
     }
 }
 
-int main(void)
+int main(int argc, char **argv)
 {
     IOTHUB_CLIENT_TRANSPORT_PROVIDER protocol;
     IOTHUB_MESSAGE_HANDLE message_handle;
@@ -112,7 +112,13 @@ int main(void)
 
     (void)printf("Creating IoTHub Device handle\r\n");
     // Create the iothub handle here
-    device_ll_handle = IoTHubDeviceClient_LL_CreateFromConnectionString(connectionString, protocol);
+
+    if (argc != 2) {
+        (void)printf("Parameter is not correct!");
+        return 0;
+    }
+
+    device_ll_handle = IoTHubDeviceClient_LL_CreateFromConnectionString(argv[1], protocol);
     if (device_ll_handle == NULL)
     {
         (void)printf("Failure createing Iothub device.  Hint: Check you connection string.\r\n");
@@ -144,6 +150,7 @@ int main(void)
 
         // Setting connection status callback to get indication of connection to iothub
         (void)IoTHubDeviceClient_LL_SetConnectionStatusCallback(device_ll_handle, connection_status_callback, NULL);
+        (void)IoTHubDeviceClient_LL_EnablePolicyConfiguration(device_ll_handle, POLICY_CONFIGURATION_DISTRIBUTED_TRACING, true);
 
         do
         {
@@ -177,7 +184,7 @@ int main(void)
             }
 
             IoTHubDeviceClient_LL_DoWork(device_ll_handle);
-            ThreadAPI_Sleep(1);
+            ThreadAPI_Sleep(10000);
 
         } while (g_continueRunning);
 
